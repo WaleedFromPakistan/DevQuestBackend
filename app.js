@@ -58,7 +58,9 @@ app.get('/', (req, res)=>{
 
 //API Routes
 app.use("/api/auth/user", require("./routes/user.routes"));
-app.use("/api/badge",require('./routes/badge.routes'))
+app.use("/api/badge",require('./routes/badge.routes'));
+app.use("/api/project", require('./routes/project.routes'))
+app.use("/api/tasks",require('./routes/task.routes'))
 
 app.listen(port,()=>{
     console.log(`The server is Listening on port ${port}`);
