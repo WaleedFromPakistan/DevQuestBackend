@@ -22,7 +22,7 @@ const taskSchema = new Schema(
     project: {
       type: Schema.Types.ObjectId,
       ref: "Project",
-      required: true,
+      required: false,
     },
 
     // PM who created the task
@@ -42,7 +42,7 @@ const taskSchema = new Schema(
     // Kanban status
     status: {
       type: String,
-      enum: ["todo", "in_progress", "review", "done"],
+      enum: ["assigned","todo", "in_progress", "review", "done"],
       default: "todo",
     },
 

@@ -21,30 +21,30 @@ exports.createTask = async (req, res) => {
 
     const pmId = req.user.id;
 
-    if (!title || !project || xp === undefined) {
-      return res.status(400).json({
-        message: "Title, project and XP are required.",
-      });
-    }
+    // if (!title || !project || xp === undefined) {
+    //   return res.status(400).json({
+    //     message: "Title, project and XP are required.",
+    //   });
+    // }
 
     // Validate project exists
-    const projectData = await Project.findById(project);
-    if (!projectData)
-      return res.status(404).json({ message: "Project not found." });
+    // const projectData = await Project.findById(project);
+    // if (!projectData)
+    //   return res.status(404).json({ message: "Project not found." });
 
-    // Only PM can create tasks
-    if (projectData.pm.toString() !== pmId) {
-      return res.status(403).json({
-        message: "Only assigned PM can create tasks.",
-      });
-    }
+    // // Only PM can create tasks
+    // if (projectData.pm.toString() !== pmId) {
+    //   return res.status(403).json({
+    //     message: "Only assigned PM can create tasks.",
+    //   });
+    // }
 
     // 🛑 XP must not exceed project XP budget
-    if (xp > projectData.xpBudget) {
-      return res.status(400).json({
-        message: `Task XP (${xp}) cannot exceed project XP budget (${projectData.xpBudget}).`,
-      });
-    }
+    // if (xp > projectData.xpBudget) {
+    //   return res.status(400).json({
+    //     message: `Task XP (${xp}) cannot exceed project XP budget (${projectData.xpBudget}).`,
+    //   });
+    // }
 
     // Create task
     const task = await Task.create({
@@ -60,8 +60,8 @@ exports.createTask = async (req, res) => {
     });
 
     // ⭐ Update project stats
-    projectData.totalTasks += 1;
-    projectData.recalculateProgress();
+    // projectData.totalTasks += 1;
+    // projectData.recalculateProgress();
     await projectData.save();
 
     res.status(201).json({
@@ -294,6 +294,54 @@ exports.getTaskById = async (req, res) => {
     res.status(200).json(task);
   } catch (err) {
     console.error("Get Task Error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+/* ============================================================
+   NEW →  GET ALL TASKS  (Admin / PM Dashboard)
+============================================================ */
+exports.getAllTasks = async (req, res) => {
+  try {
+    let { page = 1, limit = 20, status, project, assignedTo, sort } = req.query;
+    
+    page = Number(page);
+    limit = Number(limit);
+
+    // Filters
+    const filter = {};
+
+    if (status) filter.status = status;
+    if (project) filter.project = project;
+    if (assignedTo) filter.assignedTo = assignedTo;
+
+    // Sorting
+    const sortOptions = {};
+    if (sort === "latest") sortOptions.createdAt = -1;
+    if (sort === "oldest") sortOptions.createdAt = 1;
+    if (sort === "xp-high") sortOptions.xp = -1;
+    if (sort === "xp-low") sortOptions.xp = 1;
+
+    const tasks = await Task.find(filter)
+      .populate("assignedTo", "name email")
+      .populate("createdBy", "name email")
+      .populate("project", "title")
+      .sort(sortOptions)
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    const total = await Task.countDocuments(filter);
+
+    return res.status(200).json({
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+      tasks
+    });
+
+  } catch (err) {
+    console.error("Get All Tasks Error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };

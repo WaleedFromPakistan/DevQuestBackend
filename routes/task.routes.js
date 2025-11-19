@@ -10,7 +10,8 @@ const {
   submitForReview,
   completeTask,
   getTasksByProject,
-  getTaskById
+  getTaskById,
+  getAllTasks
 } = require("../controllers/task.controller.js");
 
 // Correct middleware import (NOT destructured)
@@ -36,10 +37,14 @@ router.put("/review/:taskId", authMiddleware, submitForReview);
 // PM → Complete Task
 router.put("/complete/:taskId", authMiddleware, completeTask);
 
+router.get("/all", authMiddleware, getAllTasks);
+
+
 // Get all tasks of a project
 router.get("/project/:projectId", authMiddleware, getTasksByProject);
 
 // Get single task
 router.get("/:taskId", authMiddleware, getTaskById);
+
 
 module.exports = router;
