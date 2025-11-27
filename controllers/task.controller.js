@@ -21,30 +21,30 @@ exports.createTask = async (req, res) => {
 
     const pmId = req.user.id;
 
-    // if (!title || !project || xp === undefined) {
-    //   return res.status(400).json({
-    //     message: "Title, project and XP are required.",
-    //   });
-    // }
+    if (!title || !project || xp === undefined) {
+      return res.status(400).json({
+        message: "Title, project and XP are required.",
+      });
+    }
 
     // Validate project exists
-    // const projectData = await Project.findById(project);
-    // if (!projectData)
-    //   return res.status(404).json({ message: "Project not found." });
+    const projectData = await Project.findById(project);
+    if (!projectData)
+      return res.status(404).json({ message: "Project not found." });
 
     // // Only PM can create tasks
-    // if (projectData.pm.toString() !== pmId) {
-    //   return res.status(403).json({
-    //     message: "Only assigned PM can create tasks.",
-    //   });
-    // }
+    if (projectData.pm.toString() !== pmId) {
+      return res.status(403).json({
+        message: "Only assigned PM can create tasks.",
+      });
+    }
 
     // 🛑 XP must not exceed project XP budget
-    // if (xp > projectData.xpBudget) {
-    //   return res.status(400).json({
-    //     message: `Task XP (${xp}) cannot exceed project XP budget (${projectData.xpBudget}).`,
-    //   });
-    // }
+    if (xp > projectData.xpBudget) {
+      return res.status(400).json({
+        message: `Task XP (${xp}) cannot exceed project XP budget (${projectData.xpBudget}).`,
+      });
+    }
 
     // Create task
     const task = await Task.create({

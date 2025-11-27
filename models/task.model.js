@@ -22,7 +22,7 @@ const taskSchema = new Schema(
     project: {
       type: Schema.Types.ObjectId,
       ref: "Project",
-      required: false,
+      required: true,
     },
 
     // PM who created the task
