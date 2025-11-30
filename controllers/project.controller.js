@@ -38,6 +38,46 @@ const awardXPOnProjectCompletion = async (project) => {
 /* ============================================================
    1. CLIENT → CREATE PROJECT
 ============================================================ */
+// exports.createProject = async (req, res) => {
+//   try {
+//     const { 
+//       title, 
+//       description, 
+//       pm, 
+//       deadline, 
+//       tags, 
+//       xpBudget,
+//       xpPerTask 
+//     } = req.body;
+
+//     const client = req.user.id;
+
+//     if (!title) {
+//       return res.status(400).json({ message: "Title is required" });
+//     }
+
+//     const newProject = await Project.create({
+//       title,
+//       description,
+//       client,
+//       pm,
+//       deadline,
+//       tags,
+//       xpBudget,
+//       xpPerTask
+//     });
+
+//     res.status(201).json({
+//       message: "Project created successfully.",
+//       project: newProject,
+//     });
+
+//   } catch (err) {
+//     console.error("Create Project Error:", err);
+//     res.status(500).json({ message: "Server error." });
+//   }
+// };
+
 exports.createProject = async (req, res) => {
   try {
     const { 
@@ -56,6 +96,21 @@ exports.createProject = async (req, res) => {
       return res.status(400).json({ message: "Title is required" });
     }
 
+    // Fetch client user
+    const clientUser = await User.findById(client).select("name");
+    if (!clientUser) {
+      return res.status(404).json({ message: "Client not found" });
+    }
+
+    // Fetch PM if provided
+    let pmUser = null;
+    if (pm) {
+      pmUser = await User.findById(pm).select("name");
+      if (!pmUser) {
+        return res.status(404).json({ message: "PM not found" });
+      }
+    }
+
     const newProject = await Project.create({
       title,
       description,
@@ -64,7 +119,9 @@ exports.createProject = async (req, res) => {
       deadline,
       tags,
       xpBudget,
-      xpPerTask
+      xpPerTask,
+      clientName: clientUser.name,
+      pmName: pmUser ? pmUser.name : null
     });
 
     res.status(201).json({

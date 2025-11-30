@@ -11,7 +11,8 @@ const {
   completeTask,
   getTasksByProject,
   getTaskById,
-  getAllTasks
+  getAllTasks,
+  deleteTask
 } = require("../controllers/task.controller.js");
 
 // Correct middleware import (NOT destructured)
@@ -39,12 +40,17 @@ router.put("/complete/:taskId", authMiddleware, completeTask);
 
 router.get("/all", authMiddleware, getAllTasks);
 
+//Delete Tasks
+router.delete(
+  "/:taskId",
+  authMiddleware, // Ensure user is logged in
+  deleteTask // The new controller function
+);
 
 // Get all tasks of a project
 router.get("/project/:projectId", authMiddleware, getTasksByProject);
 
 // Get single task
 router.get("/:taskId", authMiddleware, getTaskById);
-
 
 module.exports = router;
