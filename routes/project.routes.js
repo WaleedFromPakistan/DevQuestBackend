@@ -19,6 +19,7 @@ const authMiddleware = require("../middleware/authMiddleware");
 //  PROJECT ROUTES
 // -----------------------------
 
+
 // CLIENT → Create project
 router.post("/create", authMiddleware, createProject);
 
