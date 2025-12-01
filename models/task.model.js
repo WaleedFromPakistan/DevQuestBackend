@@ -19,7 +19,7 @@ const taskSchema = new Schema(
     },
 
     // The project to which this task belongs
-    project: {
+    projectId: {
       type: Schema.Types.ObjectId,
       ref: "Project",
       required: true,

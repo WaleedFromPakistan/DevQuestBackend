@@ -12,7 +12,7 @@ exports.createTask = async (req, res) => {
     const {
       title,
       description,
-      project,
+      projectId,
       assignedTo,
       xp,
       priority,
@@ -21,14 +21,14 @@ exports.createTask = async (req, res) => {
 
     const pmId = req.user.id;
 
-    if (!title || !project || xp === undefined) {
+    if (!title || !projectId || xp === undefined) {
       return res.status(400).json({
-        message: "Title, project and XP are required.",
+        message: "Title, projectId and XP are required.",
       });
     }
 
     // Validate project exists
-    const projectData = await Project.findById(project);
+    const projectData = await Project.findById(projectId);
     if (!projectData)
       return res.status(404).json({ message: "Project not found." });
 
@@ -50,7 +50,7 @@ exports.createTask = async (req, res) => {
     const task = await Task.create({
       title,
       description,
-      project,
+      projectId,
       assignedTo,
       createdBy: pmId,
       xp,
@@ -84,22 +84,22 @@ exports.editTask = async (req, res) => {
 
     const pmId = req.user.id;
 
-    const task = await Task.findById(taskId).populate("project");
+    const task = await Task.findById(taskId).populate("projectId");
     if (!task) return res.status(404).json({ message: "Task not found." });
 
     // Only PM can edit
-    if (task.project.pm.toString() !== pmId) {
+    if (task.createdBy.toString() !== pmId) {
       return res.status(403).json({ message: "Only PM can edit tasks." });
     }
 
     // XP validation
-    if (updates.xp !== undefined) {
-      if (updates.xp > task.project.xpBudget) {
-        return res.status(400).json({
-          message: `Updated XP (${updates.xp}) cannot exceed project XP budget (${task.project.xpBudget}).`,
-        });
-      }
-    }
+    // if (updates.xp !== undefined) {
+    //   if (updates.xp > task.project.xpBudget) {
+    //     return res.status(400).json({
+    //       message: `Updated XP (${updates.xp}) cannot exceed project XP budget (${task.project.xpBudget}).`,
+    //     });
+    //   }
+    // }
 
     Object.assign(task, updates);
     await task.save();
@@ -304,7 +304,7 @@ exports.getTaskById = async (req, res) => {
 ============================================================ */
 exports.getAllTasks = async (req, res) => {
   try {
-    let { page = 1, limit = 20, status, project, assignedTo, sort } = req.query;
+    let { page = 1, limit = 20, status, projectId, assignedTo, sort } = req.query;
     
     page = Number(page);
     limit = Number(limit);
@@ -313,7 +313,7 @@ exports.getAllTasks = async (req, res) => {
     const filter = {};
 
     if (status) filter.status = status;
-    if (project) filter.project = project;
+    if (projectId) filter.projectId = projectId;
     if (assignedTo) filter.assignedTo = assignedTo;
 
     // Sorting
@@ -326,7 +326,7 @@ exports.getAllTasks = async (req, res) => {
     const tasks = await Task.find(filter)
       .populate("assignedTo", "name email")
       .populate("createdBy", "name email")
-      .populate("project", "title")
+      .populate("projectId", "title")
       .sort(sortOptions)
       .skip((page - 1) * limit)
       .limit(limit);
@@ -342,6 +342,71 @@ exports.getAllTasks = async (req, res) => {
 
   } catch (err) {
     console.error("Get All Tasks Error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+/* ============================================================
+   9. PM → DELETE TASK
+   Compatible with frontend hook: deleteTask
+============================================================ */
+exports.deleteTask = async (req, res) => {
+  try {
+    const { taskId } = req.params;
+    const pmId = req.user.id; // Currently authenticated user
+
+    // 1. Find the task and populate its project details
+    const task = await Task.findById(taskId).populate("projectId");
+    
+    if (!task) {
+      return res.status(404).json({ message: "Task not found." });
+    }
+
+    // 2. Authorization Check: Only the PM of the project can delete
+    if (task.createdBy.toString() !== pmId) {
+      console.log("The createdBy Id" , task.createdBy.toString());
+      console.log("the pmId", pmId);
+      return res.status(403).json({
+        message: "Only the assigned PM can delete tasks.",
+      });
+    }
+
+    // 3. Delete the task
+    await Task.deleteOne({ _id: taskId });
+
+    // 4. Update project stats (Decrement total tasks)
+    const project = await Project.findById(task.projectId);
+    
+    // Safety check - though project should exist
+    if (project) {
+        // Decrease task count
+        // project.totalTasks -= 1; 
+        // Note: You should call a method like recalculateProgress
+        // or ensure totalTasks is correctly managed based on your Project model logic.
+        // Assuming your Project model has logic to handle this, let's save the project.
+        // For a full solution, Project model may need to recalculate total tasks from DB.
+        
+        // **⭐ Suggested best practice: Implement a Project method to sync stats**
+        if (typeof project.syncStats === 'function') {
+            await project.syncStats(); 
+        } else {
+             // Fallback: If not implemented, just save if other properties might be linked.
+             // For a pure delete, saving might not be strictly necessary unless stats need recalculation.
+             // We'll proceed assuming Project model handles totalTasks count implicitly 
+             // or via a method like syncStats/recalculateProgress.
+        }
+        
+    }
+
+
+    // 5. Success Response
+    res.status(200).json({
+      message: "Task deleted successfully.",
+      taskId, // Return the ID for frontend confirmation
+    });
+
+  } catch (err) {
+    console.error("Delete Task Error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };

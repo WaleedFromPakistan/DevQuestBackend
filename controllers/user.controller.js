@@ -35,7 +35,7 @@ const registerUser = async (req, res) => {
     });
 
     // Generate token
-    const token = generateToken(user._id);
+    const devQuestUserToken = generateToken(user._id);
 
     return res.status(201).json({
       message: "User registered successfully.",
@@ -47,7 +47,7 @@ const registerUser = async (req, res) => {
         xp: user.xp,
         level: user.level,
       },
-      token,
+      devQuestUserToken,
     });
   } catch (error) {
     console.error("Register Error:", error);
@@ -80,7 +80,7 @@ const loginUser = async (req, res) => {
     }
 
     // Generate token
-    const token = generateToken(user._id);
+    const devQuestUserToken = generateToken(user._id);
 
     return res.status(200).json({
       message: "Login successful.",
@@ -93,7 +93,7 @@ const loginUser = async (req, res) => {
         level: user.level,
         badges: user.badges,
       },
-      token,
+      devQuestUserToken,
     });
   } catch (error) {
     console.error("Login Error:", error);

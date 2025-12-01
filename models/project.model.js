@@ -30,12 +30,23 @@ const projectSchema = new Schema(
       default: null,
     },
 
+    clientName: {
+      type: String,
+      trim: true,
+    },
+
+    pmName: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+
     // Developers involved in this project
     members: [
       {
         type: Schema.Types.ObjectId,
         ref: "User",
-      }
+      },
     ],
 
     // NEW status according to your requirement
@@ -65,7 +76,7 @@ const projectSchema = new Schema(
         url: String,
         uploadedBy: { type: Schema.Types.ObjectId, ref: "User" },
         uploadedAt: { type: Date, default: Date.now },
-      }
+      },
     ],
 
     // Client settings
@@ -80,10 +91,9 @@ const projectSchema = new Schema(
     // ⭐ NEW FIELD → XP points defined by client
     projectXp: {
       type: Number,
-      default: 0,          // if client does not set, default = 0
+      default: 0, // if client does not set, default = 0
       min: 0,
     },
-
   },
   { timestamps: true }
 );
