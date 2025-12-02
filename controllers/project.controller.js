@@ -335,3 +335,89 @@ exports.getProjectsByUser = async (req, res) => {
     res.status(500).json({ message: "Server error." });
   }
 };
+
+
+/* ============================================================
+   10. UPDATE PROJECT (Edit functionality)
+============================================================ */
+exports.updateProject = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const updateData = req.body;
+
+    // Don't allow updating certain fields if project is accepted
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    // If project is accepted or beyond, prevent editing PM and certain fields
+    if (project.status !== "assigned" && updateData.pm) {
+      return res.status(400).json({ 
+        message: "Cannot change PM once project is accepted" 
+      });
+    }
+
+    // Fetch PM name if PM is being updated
+    if (updateData.pm) {
+      const pmUser = await User.findById(updateData.pm).select("name");
+      if (pmUser) {
+        updateData.pmName = pmUser.name;
+      }
+    }
+
+    // Update the project
+    const updatedProject = await Project.findByIdAndUpdate(
+      projectId,
+      updateData,
+      { new: true }
+    );
+
+    res.status(200).json({
+      message: "Project updated successfully.",
+      project: updatedProject,
+    });
+
+  } catch (err) {
+    console.error("Update Project Error:", err);
+    res.status(500).json({ message: "Server error." });
+  }
+};
+
+/* ============================================================
+   11. DELETE PROJECT (Only if not accepted)
+============================================================ */
+exports.deleteProject = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    // Check if project can be deleted
+    if (project.status !== "assigned" && project.status !== "cancelled") {
+      return res.status(400).json({ 
+        message: "Cannot delete project that has been accepted by a PM" 
+      });
+    }
+
+    // Only client can delete their own project
+    if (project.client.toString() !== req.user.id) {
+      return res.status(403).json({ 
+        message: "Only the client can delete this project" 
+      });
+    }
+
+    await Project.findByIdAndDelete(projectId);
+
+    res.status(200).json({
+      message: "Project deleted successfully.",
+    });
+
+  } catch (err) {
+    console.error("Delete Project Error:", err);
+    res.status(500).json({ message: "Server error." });
+  }
+};

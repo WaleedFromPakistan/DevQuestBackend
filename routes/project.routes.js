@@ -10,7 +10,9 @@ const {
   completeProject,    // ⭐ ADDED
   getAllProjects,
   getProjectById,
-  getProjectsByUser
+  getProjectsByUser,
+  updateProject,      // Add this
+  deleteProject       // Add this
 } = require("../controllers/project.controller");
 
 const authMiddleware = require("../middleware/authMiddleware");
@@ -34,6 +36,12 @@ router.put("/:projectId/start", authMiddleware, startWorking);
 
 // CLIENT or PM → Cancel project
 router.put("/:projectId/cancel", authMiddleware, cancelProject);
+
+// Update project (for edit functionality)
+router.put("/:projectId", authMiddleware, updateProject);
+
+// Delete project (only for non-accepted projects)
+router.delete("/:projectId", authMiddleware, deleteProject);
 
 // PM → Complete project (XP Distribution + Progress Update Trigger)
 router.put("/:projectId/complete", authMiddleware, completeProject);
