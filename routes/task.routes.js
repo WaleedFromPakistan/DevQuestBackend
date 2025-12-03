@@ -12,7 +12,9 @@ const {
   getTasksByProject,
   getTaskById,
   getAllTasks,
-  deleteTask
+  deleteTask,
+  getTasksByProjectManager,
+  getTasksByDeveloper
 } = require("../controllers/task.controller.js");
 
 // Correct middleware import (NOT destructured)
@@ -52,5 +54,8 @@ router.get("/project/:projectId", authMiddleware, getTasksByProject);
 
 // Get single task
 router.get("/:taskId", authMiddleware, getTaskById);
+
+router.get("/pm/:pmId", authMiddleware, getTasksByProjectManager);
+router.get("/dev/:devId", authMiddleware,getTasksByDeveloper);
 
 module.exports = router;

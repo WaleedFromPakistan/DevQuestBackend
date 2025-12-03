@@ -88,7 +88,11 @@ exports.editTask = async (req, res) => {
     if (!task) return res.status(404).json({ message: "Task not found." });
 
     // Only PM can edit
-    if (task.createdBy.toString() !== pmId) {
+    if (task.createdBy.toString() !== pmId && task.assignedTo.toString() !== pmId ) { //Here pm Id refers to current loggedin User
+     console.log("The Task ID:" , task._id);
+      console.log("The pm ID:" , pmId);
+     console.log("The CreatedByID:",task.createdBy.toString())
+     console.log("The AssignedToID:",task.assignedTo.toString())
       return res.status(403).json({ message: "Only PM can edit tasks." });
     }
 
@@ -277,6 +281,8 @@ exports.getTasksByProject = async (req, res) => {
   }
 };
 
+
+
 /* ============================================================
    8. GET SINGLE TASK
 ============================================================ */
@@ -408,5 +414,61 @@ exports.deleteTask = async (req, res) => {
   } catch (err) {
     console.error("Delete Task Error:", err);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+/* ============================================================
+   NEW →  GET ALL TASKS BY PROJECT MANAGER  (PM Dashboard)
+============================================================ */
+exports.getTasksByProjectManager = async (req, res) => {
+  try {
+    const { pmId } = req.params;
+
+    const tasks = await Task.find({ createdBy: pmId })
+      .populate("projectId", "name")
+      .populate("assignedTo", "name email")
+      .populate("createdBy", "name email")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: tasks.length,
+      tasks,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching PM tasks",
+      error: err.message,
+    });
+  }
+};
+
+
+/* ============================================================
+   NEW →  GET ALL TASKS BY DEVELOPER  (Admin / DEVELOPER Dashboard)
+============================================================ */
+exports.getTasksByDeveloper = async (req, res) => {
+  try {
+    const { devId } = req.params;
+
+    const tasks = await Task.find({ assignedTo: devId })
+      .populate("projectId", "name")
+      .populate("assignedTo", "name email")
+      .populate("createdBy", "name email")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: tasks.length,
+      tasks,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching developer tasks",
+      error: err.message,
+    });
   }
 };

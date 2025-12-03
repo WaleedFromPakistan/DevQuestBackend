@@ -42,7 +42,7 @@ const taskSchema = new Schema(
     // Kanban status
     status: {
       type: String,
-      enum: ["assigned","todo", "in_progress", "review", "done"],
+      enum: ["assigned","todo", "in_progress","accepted" , "ignore", "review", "done"],
       default: "todo",
     },
 
